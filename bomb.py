@@ -1,10 +1,8 @@
-########################################################
-#   Aidan Tarpinian, Anthony Soria, Pedro _____
-#   Professor Kancharla
-#   Defuse the Bomb
-#   Last Edited 11/20/2023
-#   This is our bomb defusal game final project
-########################################################
+#################################
+# CSC 102 Defuse the Bomb Project
+# Main program
+# Team: Gourd
+#################################
 
 # import the configs
 from bomb_configs import *
