@@ -320,7 +320,8 @@ class Button(PhaseThread):
         # the default value is False/Released
         self._value = False
         # has the pushbutton been pressed?
-        self._pressed = False
+        # edit: counter for the number of presses
+        self._pressed = 0
         # we need the pushbutton's RGB pins to set its color
         self._rgb = component_rgb
         # the pushbutton's randomly selected LED color
@@ -341,20 +342,28 @@ class Button(PhaseThread):
             # it is pressed
             if (self._value):
                 # note it
-                self._pressed = True
+                # edit: added to keep track of the number of presses
+                self._pressed += 1
             # it is released
             else:
                 # was it previously pressed?
-                if (self._pressed):
+                # edit: condition to check if the button is pressed at least once
+                if (self._pressed > 0):
                     # check the release parameters
                     # for R, nothing else is needed
                     # for G or B, a specific digit must be in the timer (sec) when released
-                    if (not self._target or self._target in self._timer._sec):
+                    # edit anthony: for R, one press is needed, for G 2 press is needed, for B 3 press is needed
+                    if (
+                        (self._color == "R" and self._pressed == 1)
+                        or (self._color == "G" and self._pressed == 2)
+                        or (self._color == "B" and self._pressed == 3)
+                    ):
                         self._defused = True
                     else:
                         self._failed = True
                     # note that the pushbutton was released
-                    self._pressed = False
+                    # edit: resets the press counter
+                    self._pressed = 0
             sleep(0.1)
 
     # returns the pushbutton's state as a string
