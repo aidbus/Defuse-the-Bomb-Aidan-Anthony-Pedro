@@ -1,8 +1,9 @@
-#################################
-# CSC 102 Defuse the Bomb Project
-# Main program
-# Team: Gourd
-#################################
+########################################################################
+# Aidan Tarpinian, Anthony Soria, Pedro Rodriguez
+# Professor Kancharla
+# Defuse the Bomb
+# This is a version of the "Keep Talking and Nobody Explodes" game
+########################################################################
 
 # import the configs
 from bomb_configs import *
