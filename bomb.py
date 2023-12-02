@@ -124,20 +124,48 @@ def check_phases():
             strike()
             # reset the wires
             wires._failed = False
+    
     # check the button
-    if (button._running):
+    if button._running:
         # update the GUI
         gui._lbutton["text"] = f"Button: {button}"
-        # the phase is defused -> stop the thread
-        if (button._defused):
-            button._running = False
-            gui._lbutton["fg"] = "#00ff00"
-            defused()
-        # the phase has failed -> strike
-        elif (button._failed):
-            strike()
-            # reset the button
-            button._failed = False
+    
+        # Check if the button is pressed
+        if button._pressed:
+            button._pressed = False  # Reset the button press flag
+        
+            # Check the button color
+            if button._color == "red":
+                # If red, press once to defuse
+                button._press_count += 1
+                if button._press_count == 1:
+                    button._defused = True
+                    button._running = False
+                    gui._lbutton["fg"] = "#00ff00"  # Change the GUI text color to green
+                    defused()  # Call the defused function
+            elif button._color == "green":
+                # If green, press twice to defuse
+                button._press_count += 1
+                if button._press_count == 2:
+                    button._defused = True
+                    button._running = False
+                    gui._lbutton["fg"] = "#00ff00"  # Change the GUI text color to green
+                    defused()  # Call the defused function
+            elif button._color == "blue":
+                # If blue, press three times to defuse
+                button._press_count += 1
+                if button._press_count == 3:
+                    button._defused = True
+                    button._running = False
+                    gui._lbutton["fg"] = "#00ff00"  # Change the GUI text color to green
+                    defused()  # Call the defused function
+
+            # If the button press count more than 3, strike
+            if button._press_count > 3:
+                strike()  # Call the strike function
+                button._failed = True
+                button._running = False
+                button._value = ""  # Reset the button value
     # check the toggles
     if (toggles._running):
         # update the GUI
