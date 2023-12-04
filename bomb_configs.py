@@ -65,21 +65,6 @@ if (RPi):
         pin.direction = Direction.INPUT
         pin.pull = Pull.DOWN
 
-button_color = choice(["R", "G", "B"])
-
-# set the target
-if button_color == "R":
-    button_target = None  # Red button can be pressed at any time
-elif button_color == "G":
-    button_target = 2  # Green button needs to be pressed twice
-elif button_color == "B":
-    button_target = 3  # Blue button needs to be pressed three times
-
-# Debugging information for button color and target
-if DEBUG:
-    print(f"Button color: {button_color}")
-    print(f"Button target: {button_target}")
-
 # pushbutton
 # 6 pins: 4, 17, 27, 22, 3V3, 3V3
 #         -BUT1- -BUT2-  --BUT3--
