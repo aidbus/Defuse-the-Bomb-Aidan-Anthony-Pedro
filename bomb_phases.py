@@ -315,7 +315,7 @@ class Wires(NumericPhase):
 
 # the pushbutton phase
 class Button(PhaseThread):
-    def __init__(self, component_state, component_rgb, target, color, timer, gui, name="Button"):
+    def __init__(self, component_state, component_rgb, target, color, timer, name="Button"):
         super().__init__(name, component_state, target)
         # the default value is False/Released
         self._value = False
@@ -327,11 +327,6 @@ class Button(PhaseThread):
         self._color = color
         # we need to know about the timer (7-segment display) to be able to determine correct pushbutton releases in some cases
         self._timer = timer
-        # GUI reference for updating GUI elements
-        self._gui = gui
-        # press count and defusal status
-        self._press_count = 0
-        self._defused = False
 
     # runs the thread
     def run(self):
@@ -340,51 +335,28 @@ class Button(PhaseThread):
         self._rgb[0].value = False if self._color == "R" else True
         self._rgb[1].value = False if self._color == "G" else True
         self._rgb[2].value = False if self._color == "B" else True
-        while self._running:
+        while (self._running):
             # get the pushbutton's state
             self._value = self._component.value
             # it is pressed
-            if self._value and not self._pressed:
+            if (self._value):
                 # note it
                 self._pressed = True
             # it is released
-            elif not self._value and self._pressed:
-                # check the release parameters based on the color
-                self._process_release()
-                # reset the press flag
-                self._pressed = False
+            else:
+                # was it previously pressed?
+                if (self._pressed):
+                    # check the release parameters
+                    # for R, nothing else is needed
+                    # for G or B, a specific digit must be in the timer (sec) when released
+                    if (not self._target or self._target in self._timer._sec):
+                        self._defused = True
+                    else:
+                        self._failed = True
+                    # note that the pushbutton was released
+                    self._pressed = False
             sleep(0.1)
 
-    # process the release logic based on color and press count
-    def _process_release(self):
-        if self._color == "R":
-            self._press_count += 1
-            if self._press_count == 1:
-                self._defused = True
-                self._running = False
-                self._gui._lbutton["fg"] = "#00ff00"  # Change the GUI text color to green
-                self._gui.defused()  # Call the defused function
-        elif self._color == "G":
-            self._press_count += 1
-            if self._press_count == 2:
-                self._defused = True
-                self._running = False
-                self._gui._lbutton["fg"] = "#00ff00"  # Change the GUI text color to green
-                self._gui.defused()  # Call the defused function
-        elif self._color == "B":
-            self._press_count += 1
-            if self._press_count == 3:
-                self._defused = True
-                self._running = False
-                self._gui._lbutton["fg"] = "#00ff00"  # Change the GUI text color to green
-                self._gui.defused()  # Call the defused function
-
-        # If the button press count more than 3, strike
-        if self._press_count > 3:
-            self._gui.strike()  # Call the strike function
-            self._failed = True
-            self._running = False
-            self._value = ""  # Reset the button value to the run part of the button class
     # returns the pushbutton's state as a string
     def __str__(self):
         if (self._defused):
@@ -396,3 +368,4 @@ class Button(PhaseThread):
 class Toggles(NumericPhase):
     def __init__(self, component, target, display_length, name="Toggles"):
         super().__init__(name, component, target, display_length)
+
