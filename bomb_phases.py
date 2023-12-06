@@ -317,44 +317,40 @@ class Wires(NumericPhase):
 class Button(PhaseThread):
     def __init__(self, component_state, component_rgb, target, color, timer, name="Button"):
         super().__init__(name, component_state, target)
-        # the default value is False/Released
-        self._value = False
-        # has the pushbutton been pressed?
-        self._pressed = False
-        # we need the pushbutton's RGB pins to set its color
-        self._rgb = component_rgb
-        # the pushbutton's randomly selected LED color
-        self._color = color
-        # we need to know about the timer (7-segment display) to be able to determine correct pushbutton releases in some cases
-        self._timer = timer
+        self._value = False  # the default value is False/Released
+        self._pressed = False  # has the pushbutton been pressed?
+        self._rgb = component_rgb  # RGB pins for setting the color
+        self._color = color  # randomly selected LED color
+        self._timer = timer  # to determine correct pushbutton releases
 
-    # runs the thread
+        # Modify: Add click counter and the required click counts for each color
+        self._click_count = 0
+        self._required_clicks = {"R": 1, "G": 3, "B": 3}
+
     def run(self):
         self._running = True
-        # set the RGB LED color
         self._rgb[0].value = False if self._color == "R" else True
         self._rgb[1].value = False if self._color == "G" else True
         self._rgb[2].value = False if self._color == "B" else True
-        while (self._running):
-            # get the pushbutton's state
+
+        while self._running:
             self._value = self._component.value
-            # it is pressed
-            if (self._value):
-                # note it
+
+            if self._value:
+                # Button is pressed
                 self._pressed = True
-            # it is released
-            else:
-                # was it previously pressed?
-                if (self._pressed):
-                    # check the release parameters
-                    # for R, nothing else is needed
-                    # for G or B, a specific digit must be in the timer (sec) when released
-                    if (not self._target or self._target in self._timer._sec):
+            elif self._pressed:
+                # Button is released
+                if self._target and self._target not in self._timer._sec:
+                    self._failed = True
+                else:
+                    # Increment click count and check for defusal
+                    self._click_count += 1
+                    if self._click_count == self._required_clicks[self._color]:
                         self._defused = True
-                    else:
-                        self._failed = True
-                    # note that the pushbutton was released
-                    self._pressed = False
+
+                self._pressed = False
+
             sleep(0.1)
 
     # returns the pushbutton's state as a string
