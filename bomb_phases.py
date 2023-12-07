@@ -317,40 +317,48 @@ class Wires(NumericPhase):
 class Button(PhaseThread):
     def __init__(self, component_state, component_rgb, target, color, timer, name="Button"):
         super().__init__(name, component_state, target)
-        self._value = False  # the default value is False/Released
-        self._pressed = False  # has the pushbutton been pressed?
-        self._rgb = component_rgb  # RGB pins for setting the color
-        self._color = color  # randomly selected LED color
-        self._timer = timer  # to determine correct pushbutton releases
+        # the default value is False/Released
+        self._value = False
+        # has the pushbutton been pressed?
+        self._pressed = False
+        # we need the pushbutton's RGB pins to set its color
+        self._rgb = component_rgb
+        # the pushbutton's randomly selected LED color
+        self._color = color
+        # we need to know about the timer (7-segment display) to be able to determine correct pushbutton releases in some cases
+        
 
-        # Modify: Add click counter and the required click counts for each color
-        self._click_count = 0
-        self._required_clicks = {"R": 1, "G": 3, "B": 3}
-
+    # runs the thread
     def run(self):
         self._running = True
+        # set the RGB LED color
         self._rgb[0].value = False if self._color == "R" else True
         self._rgb[1].value = False if self._color == "G" else True
         self._rgb[2].value = False if self._color == "B" else True
-
-        while self._running:
+        while (self._running):
+            # get the pushbutton's state
             self._value = self._component.value
-
-            if self._value:
-                # Button is pressed
+            # it is pressed
+            if (self._value):
+                # note it
                 self._pressed = True
-            elif self._pressed:
-                # Button is released
-                if self._target and self._target not in self._timer._sec:
-                    self._failed = True
-                else:
-                    # Increment click count and check for defusal
+            # it is released
+            else:
+                # was it previously pressed?
+                if (self._pressed):
+                    # update the click count
                     self._click_count += 1
-                    if self._click_count == self._required_clicks[self._color]:
+                    # check the click count and update defusal status
+                    if (self._color == "R" and self._click_count == 1) \
+                            or (self._color == "G" and self._click_count == 2) \
+                            or (self._color == "B" and self._click_count == 3):
                         self._defused = True
-
-                self._pressed = False
-
+                    else:
+                        self._failed = True
+                    # reset the click count
+                    self._click_count = 0
+                    # note that the pushbutton was released
+                    self._pressed = False
             sleep(0.1)
 
     # returns the pushbutton's state as a string
@@ -358,7 +366,7 @@ class Button(PhaseThread):
         if (self._defused):
             return "DEFUSED"
         else:
-            return str("Pressed" if self._value else "Released")
+            return f"Clicked {self._click_count} times"
 
 # the toggle switches phase
 class Toggles(NumericPhase):
