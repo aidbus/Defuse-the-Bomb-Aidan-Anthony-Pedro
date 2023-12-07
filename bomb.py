@@ -1,9 +1,8 @@
-########################################################################
-# Aidan Tarpinian, Anthony Soria, Pedro Rodriguez
-# Professor Kancharla
-# Defuse the Bomb
-# This is a version of the "Keep Talking and Nobody Explodes" game
-########################################################################
+#################################
+# CSC 102 Defuse the Bomb Project
+# Main program
+# Team: Gourd
+#################################
 
 # import the configs
 from bomb_configs import *
@@ -124,8 +123,8 @@ def check_phases():
             strike()
             # reset the wires
             wires._failed = False
-   # check the button 
-   if (button._running):
+    # check the button
+    if (button._running):
         # update the GUI
         gui._lbutton["text"] = f"Button: {button}"
         # the phase is defused -> stop the thread
@@ -224,7 +223,7 @@ def turn_off():
 ######
 
 # initialize pygame
-pygame.init()
+#pygame.init()
 
 # initialize the LCD GUI
 window = Tk()
