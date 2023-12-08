@@ -314,6 +314,7 @@ class Wires(NumericPhase):
             return "".join([ chr(int(i)+65) if pin.value else "." for i, pin in enumerate(self._component) ])
 
 # the pushbutton phase
+# the pushbutton phase
 class Button(PhaseThread):
     def __init__(self, component_state, component_rgb, target, color, timer, name="Button"):
         super().__init__(name, component_state, target)
@@ -368,8 +369,8 @@ class Button(PhaseThread):
         else:
             return f"Clicked {self._click_count} times"
 
+
 # the toggle switches phase
 class Toggles(NumericPhase):
     def __init__(self, component, target, display_length, name="Toggles"):
         super().__init__(name, component, target, display_length)
-
