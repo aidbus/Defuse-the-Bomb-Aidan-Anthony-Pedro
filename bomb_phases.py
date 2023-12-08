@@ -23,7 +23,7 @@ class Lcd(Frame):
     def __init__(self, window):
         super().__init__(window, bg="black")
         # make the GUI fullscreen
-        window.attributes("-fullscreen", True)
+        #window.attributes("-fullscreen", True)
         # we need to know about the timer (7-segment display) to be able to pause/unpause it
         self._timer = None
         # we need to know about the pushbutton to turn off its LED when the program exits
@@ -316,7 +316,7 @@ class Wires(NumericPhase):
 # the pushbutton phase
 # the pushbutton phase
 class Button(PhaseThread):
-    def __init__(self, component_state, component_rgb, target, color, timer, name="Button"):
+    def __init__(self, component_state, component_rgb, target, color, name="Button"):
         super().__init__(name, component_state, target)
         # the default value is False/Released
         self._value = False
@@ -356,8 +356,6 @@ class Button(PhaseThread):
                         self._defused = True
                     else:
                         self._failed = True
-                    # reset the click count
-                    self._click_count = 0
                     # note that the pushbutton was released
                     self._pressed = False
             sleep(0.1)
@@ -374,3 +372,4 @@ class Button(PhaseThread):
 class Toggles(NumericPhase):
     def __init__(self, component, target, display_length, name="Toggles"):
         super().__init__(name, component, target, display_length)
+
