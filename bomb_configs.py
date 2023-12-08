@@ -124,7 +124,7 @@ def genSerial():
     serial += [ choice([ chr(n) for n in range(70, 91) ]) ]
     # and make the serial number a string
     serial = "".join(serial)
-
+    serial = genKeypadCombination()
     return serial, toggle_value, jumper_value
 
 # generates the keypad combination from two random hexadecimal values
@@ -148,7 +148,7 @@ def genKeypadCombination():
     value = (decimal_value_1) * (decimal_value_2) * (decimal_value_3)
     print (value)
     keypad_combination = str(hex_value_1)+str(hex_value_2)+str(hex_value_3)
-    return hex_value_1, hex_value_2, hex_value_3, keypad_combination, value
+    return keypad_combination
 
 
     # the list of keywords and matching passphrases
@@ -197,7 +197,6 @@ serial, toggles_target, wires_target = genSerial()
 #  decimal_value_3: the decimal value of the third hex value
 
 #  keypad_target: the keypad phase defuse value (combination)
-hex_value_1, hex_value_2, hex_value_3, keypad_target, value = genKeypadCombination()
 
 #if (DEBUG):
    # print(f"Keypad target: {hex_value_1}/{decimal_value_1} + {hex_value_2}/{decimal_value_2} = {keypad_target}")
@@ -223,10 +222,10 @@ elif (button_color == "B"):
     wires_target = 14
 
 if (DEBUG):
-    print(f"Serial number: {keypad_target}")
+    print(f"Serial number: {serial}")
     print(f"Toggles target: {bin(toggles_target)[2:].zfill(4)}/{toggles_target}")
     print(f"Wires target: {bin(wires_target)[2:].zfill(5)}/{wires_target}")
-    print(f"Keypad target: {hex_value_1} + {hex_value_2} + {hex_value_3} = {keypad_target}")
+    print(f"Keypad target: {serial}")
     print(f"Button target: {button_target}")
 
 # set the bomb's LCD bootup text
@@ -234,7 +233,7 @@ boot_text = f"Booting...\n\x00\x00"\
             f"*Kernel v3.1.4-159 loaded.\n"\
             f"Initializing subsystems...\n\x00"\
             f"*System model: 102BOMBv4.2\n"\
-            f"*Serial number: {keypad_target}\n"\
+            f"*Serial number: {serial}\n"\
             f"*{' '.join(ascii_uppercase)}\n"\
             f"*{' '.join([str(n % 10) for n in range(26)])}\n"\
             f"Rendering phases...\x00"
