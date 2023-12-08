@@ -6,7 +6,7 @@
 
 # constants
 DEBUG = True        # debug mode?
-RPi = False           # is this running on the RPi?
+RPi = True           # is this running on the RPi?
 ANIMATE = False       # animate the LCD text?
 SHOW_BUTTONS = True # show the Pause and Quit buttons on the main LCD GUI?
 COUNTDOWN = 60      # the initial bomb countdown value (seconds)
@@ -202,14 +202,20 @@ keyword, cipher_keyword, rot, keypad_target, passphrase = genKeypadCombination()
 button_color = choice(["R", "G", "B"])
 # appropriately set the target (R is None)
 button_target = None
-
 # G is the first numeric digit in the serial number
-if button_color == "R":
-    button_target = None  # Red button can be pressed at any time
-elif button_color == "G":
-    button_target = 2  # Green button needs to be pressed twice
-elif button_color == "B":
-    button_target = 3  # Blue button needs to be pressed three times
+if (button_color == "G"):
+    button_target = [ n for n in serial if n.isdigit() ][0]
+    # modify the wires target (G is to cut wires B and D)
+    #  ABCDE
+    #  10101 = 21
+    wires_target = 21
+# B is the last numeric digit in the serial number
+elif (button_color == "B"):
+    button_target = [ n for n in serial if n.isdigit() ][-1]
+    # modify the wires target (B is to cut all wires except B, C, and D)
+    #  ABCDE
+    #  01110 = 14
+    wires_target = 14
 
 if (DEBUG):
     print(f"Serial number: {serial}")
@@ -218,7 +224,7 @@ if (DEBUG):
     print(f"Keypad target: {keypad_target}/{passphrase}/{keyword}/{cipher_keyword}(rot={rot})")
     print(f"Button target: {button_target}")
 
-# set the bin bomb's LCD bootup text
+# set the bomb's LCD bootup text
 boot_text = f"Booting...\n\x00\x00"\
             f"*Kernel v3.1.4-159 loaded.\n"\
             f"Initializing subsystems...\n\x00"\
