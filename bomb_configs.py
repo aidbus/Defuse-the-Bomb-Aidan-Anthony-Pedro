@@ -124,54 +124,52 @@ def genSerial():
     serial += [ choice([ chr(n) for n in range(70, 91) ]) ]
     # and make the serial number a string
     serial = "".join(serial)
-
+    serial = genKeypadCombination()
     return serial, toggle_value, jumper_value
 
-# generates the keypad combination from a keyword and rotation key
+# generates the keypad combination from two random hexadecimal values
 def genKeypadCombination():
-    # encrypts a keyword using a rotation cipher
-    def encrypt(keyword, rot):
-        cipher = ""
+    # generates a random hexadecimal value
+    def generate_hex_value():
+        return hex(randint(16, 100))[2:].upper().zfill(0)
 
-        # encrypt each letter of the keyword using rot
-        for c in keyword:
-            cipher += chr((ord(c) - 65 + rot) % 26 + 65)
+    # the two random hexadecimal values
+    hex_value_1 = generate_hex_value()
+    hex_value_2 = generate_hex_value()
+    hex_value_3 = generate_hex_value()
+    
+    # calculate the decimal equivalents
+    decimal_value_1 = int(hex_value_1, 16)
+    decimal_value_2 = int(hex_value_2, 16)
+    decimal_value_3 = int(hex_value_3, 16)
+    
 
-        return cipher
+    # multiply the decimal values to form the keypad combination
+    value = (decimal_value_1) * (decimal_value_2) * (decimal_value_3)
+    print (value)
+    keypad_combination = str(hex_value_1)+str(hex_value_2)+str(hex_value_3)
+    return keypad_combination
 
-    # returns the keypad digits that correspond to the passphrase
-    def digits(passphrase):
-        combination = ""
-        keys = [ None, None, "ABC", "DEF", "GHI", "JKL", "MNO", "PRS", "TUV", "WXY" ]
-
-        # process each character of the keyword
-        for c in passphrase:
-            for i, k in enumerate(keys):
-                if (k and c in k):
-                    # map each character to its digit equivalent
-                    combination += str(i)
-
-        return combination
 
     # the list of keywords and matching passphrases
-    keywords = { "BADGER": "RIVER",\
-                 "BANDIT": "FADED",\
-                 "CABLES": "SPINY",\
-                 "CANOPY": "THROW",\
-                 "FIELDS": "CYCLE",\
-                 "FIERCE": "ALOOF",\
-                 "IMMUNE": "STOLE",\
-                 "IMPACT": "TOADY",\
-                 "MIDWAY": "FEIGN",\
-                 "MIGHTY": "CARVE",\
-                 "REBORN": "TRICK",\
-                 "RECALL": "CLIMB",\
-                 "SYMBOL": "LEAVE",\
-                 "SYSTEM": "FOXES",\
-                 "WIDELY": "BOUND",\
-                 "WINGED": "YACHT" }
+#     keywords = { "BADGER": "RIVER",\
+#                  "BANDIT": "FADED",\
+#                  "CABLES": "SPINY",\
+#                  "CANOPY": "THROW",\
+#                  "FIELDS": "CYCLE",\
+#                  "FIERCE": "ALOOF",\
+#                  "IMMUNE": "STOLE",\
+#                  "IMPACT": "TOADY",\
+#                  "MIDWAY": "FEIGN",\
+#                  "MIGHTY": "CARVE",\
+#                  "REBORN": "TRICK",\
+#                  "RECALL": "CLIMB",\
+#                  "SYMBOL": "LEAVE",\
+#                  "SYSTEM": "FOXES",\
+#                  "WIDELY": "BOUND",\
+#                  "WINGED": "YACHT" }
     # the rotation cipher key
-    rot = randint(1, 25)
+    #rot = randint(1, 25)
 
     # pick a keyword and matching passphrase
     keyword, passphrase = choice(list(keywords.items()))
@@ -191,41 +189,52 @@ def genKeypadCombination():
 serial, toggles_target, wires_target = genSerial()
 
 # generate the combination for the keypad phase
-#  keyword: the plaintext keyword for the lookup table
-#  cipher_keyword: the encrypted keyword for the lookup table
-#  rot: the key to decrypt the keyword
+#  hex_value_1: the first random hex value
+#  hex_value_2: the second random hex value
+#  hex_value_3: the third random hex value
+#  decimal_value_1: the decimal value of the first hex value
+#  decimal_value_2: the decimal value of the second hex value
+#  decimal_value_3: the decimal value of the third hex value
+
 #  keypad_target: the keypad phase defuse value (combination)
-#  passphrase: the target plaintext passphrase
-keyword, cipher_keyword, rot, keypad_target, passphrase = genKeypadCombination()
+
+#if (DEBUG):
+   # print(f"Keypad target: {hex_value_1}/{decimal_value_1} + {hex_value_2}/{decimal_value_2} = {keypad_target}")
+
 
 # generate the color of the pushbutton (which determines how to defuse the phase)
+
 button_color = choice(["R", "G", "B"])
 # appropriately set the target (R is None)
 button_target = None
-
-# G is the first numeric digit in the serial number
-if button_color == "R":
-    button_target = None  # Red button can be pressed at any time
-elif button_color == "G":
-    button_target = 2  # Green button needs to be pressed twice
-elif button_color == "B":
-    button_target = 3  # Blue button needs to be pressed three times
+# # G is the first numeric digit in the serial number
+# if (button_color == "G"):
+#     button_target = [ n for n in serial if n.isdigit() ][0]
+#     # modify the wires target (G is to cut wires B and D)
+#     #  ABCDE
+#     #  10101 = 21
+#     wires_target = 21
+# # B is the last numeric digit in the serial number
+# elif (button_color == "B"):
+#     button_target = [ n for n in serial if n.isdigit() ][-1]
+#     # modify the wires target (B is to cut all wires except B, C, and D)
+#     #  ABCDE
+#     #  01110 = 14
+#     wires_target = 14
 
 if (DEBUG):
     print(f"Serial number: {serial}")
     print(f"Toggles target: {bin(toggles_target)[2:].zfill(4)}/{toggles_target}")
     print(f"Wires target: {bin(wires_target)[2:].zfill(5)}/{wires_target}")
-    print(f"Keypad target: {keypad_target}/{passphrase}/{keyword}/{cipher_keyword}(rot={rot})")
+    print(f"Keypad target: {serial}")
     print(f"Button target: {button_target}")
 
-# set the bin bomb's LCD bootup text
+# set the bomb's LCD bootup text
 boot_text = f"Booting...\n\x00\x00"\
             f"*Kernel v3.1.4-159 loaded.\n"\
             f"Initializing subsystems...\n\x00"\
             f"*System model: 102BOMBv4.2\n"\
             f"*Serial number: {serial}\n"\
-            f"Encrypting keypad...\n\x00"\
-            f"*Keyword: {cipher_keyword}; key: {rot}\n"\
             f"*{' '.join(ascii_uppercase)}\n"\
             f"*{' '.join([str(n % 10) for n in range(26)])}\n"\
             f"Rendering phases...\x00"
