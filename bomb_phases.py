@@ -23,7 +23,7 @@ class Lcd(Frame):
     def __init__(self, window):
         super().__init__(window, bg="black")
         # make the GUI fullscreen
-        #window.attributes("-fullscreen", True)
+        window.attributes("-fullscreen", True)
         # we need to know about the timer (7-segment display) to be able to pause/unpause it
         self._timer = None
         # we need to know about the pushbutton to turn off its LED when the program exits
@@ -326,7 +326,13 @@ class Button(PhaseThread):
         self._rgb = component_rgb
         # the pushbutton's randomly selected LED color
         self._color = color
-        # we need to know about the timer (7-segment display) to be able to determine correct pushbutton releases in some cases
+        # define the number of clicks required to defuse based on color
+        self._clicks_required = 1  # Default for Red
+        if color == "G":
+            self._clicks_required = 2
+        elif color == "B":
+            self._clicks_required = 3
+        # count the number of clicks
         self._click_count = 0
 
     # runs the thread
@@ -347,16 +353,10 @@ class Button(PhaseThread):
             else:
                 # was it previously pressed?
                 if (self._pressed):
-                    # update the click count
                     self._click_count += 1
-                    # check the click count and update defusal status
-                    if (self._color == "R" and self._click_count == 1) \
-                            or (self._color == "G" and self._click_count == 2) \
-                            or (self._color == "B" and self._click_count == 3):
+                    # check if the required number of clicks is reached
+                    if self._click_count == self._clicks_required:
                         self._defused = True
-                    else:
-                        self._failed = True
-                    # note that the pushbutton was released
                     self._pressed = False
             sleep(0.1)
 
@@ -365,10 +365,10 @@ class Button(PhaseThread):
         if (self._defused):
             return "DEFUSED"
         else:
-            return f"Clicked {self._click_count} times"
+            return f"{self._click_count} clicks"
 
 
-# the toggle switches phase
+    # the toggle switches phase
 class Toggles(NumericPhase):
     def __init__(self, component, target, display_length, name="Toggles"):
         super().__init__(name, component, target, display_length)
