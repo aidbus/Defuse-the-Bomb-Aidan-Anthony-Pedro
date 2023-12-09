@@ -327,7 +327,7 @@ class Button(PhaseThread):
         # the pushbutton's randomly selected LED color
         self._color = color
         # we need to know about the timer (7-segment display) to be able to determine correct pushbutton releases in some cases
-        
+        self._click_count = 0
 
     # runs the thread
     def run(self):
