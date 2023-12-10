@@ -6,7 +6,7 @@
 
 # constants
 DEBUG = True        # debug mode?
-RPi = True           # is this running on the RPi?
+RPi = False           # is this running on the RPi?
 ANIMATE = False       # animate the LCD text?
 SHOW_BUTTONS = True # show the Pause and Quit buttons on the main LCD GUI?
 COUNTDOWN = 60      # the initial bomb countdown value (seconds)
@@ -99,87 +99,22 @@ if (RPi):
 #  the sum of the digits should be in the range 1..15 to set the toggles target
 #  the first three letters should be distinct and in the range 0..4 such that A=0, B=1, etc, to match the jumper wires
 #  the last letter should be outside of the range
+# Function to generate the bomb's specifics
 def genSerial():
-    # set the digits (used in the toggle switches phase)
-    serial_digits = []
-    toggle_value = randint(1, 15)
-    # the sum of the digits is the toggle value
-    while (len(serial_digits) < 3 or toggle_value - sum(serial_digits) > 0):
-        d = randint(0, min(9, toggle_value - sum(serial_digits)))
-        serial_digits.append(d)
+    # Generate two random binary numbers (8 bits for simplicity)
+    binary_number_1 = ''.join([str(randint(0, 1)) for _ in range(8)])
+    binary_number_2 = ''.join([str(randint(0, 1)) for _ in range(8)])
 
-    # set the letters (used in the jumper wires phase)
-    jumper_indexes = [ 0 ] * 5
-    while (sum(jumper_indexes) < 3):
-        jumper_indexes[randint(0, len(jumper_indexes) - 1)] = 1
-    jumper_value = int("".join([ str(n) for n in jumper_indexes ]), 2)
-    # the letters indicate which jumper wires must be "cut"
-    jumper_letters = [ chr(i + 65) for i, n in enumerate(jumper_indexes) if n == 1 ]
+    # Calculate the product of the binary numbers
+    product_binary = bin(int(binary_number_1, 2) * int(binary_number_2, 2))[2:]
 
-    # form the serial number
-    serial = [ str(d) for d in serial_digits ] + jumper_letters
-    # and shuffle it
-    shuffle(serial)
-    # finally, add a final letter (F..Z)
-    serial += [ choice([ chr(n) for n in range(70, 91) ]) ]
-    # and make the serial number a string
-    serial = "".join(serial)
+    return binary_number_1, binary_number_2, product_binary
 
-    return serial, toggle_value, jumper_value
+# Generate the bomb's specifics
+binary_number_1, binary_number_2, product_binary = genSerial()
 
-# generates the keypad combination from a keyword and rotation key
-def genKeypadCombination():
-    # encrypts a keyword using a rotation cipher
-    def encrypt(keyword, rot):
-        cipher = ""
-
-        # encrypt each letter of the keyword using rot
-        for c in keyword:
-            cipher += chr((ord(c) - 65 + rot) % 26 + 65)
-
-        return cipher
-
-    # returns the keypad digits that correspond to the passphrase
-    def digits(passphrase):
-        combination = ""
-        keys = [ None, None, "ABC", "DEF", "GHI", "JKL", "MNO", "PRS", "TUV", "WXY" ]
-
-        # process each character of the keyword
-        for c in passphrase:
-            for i, k in enumerate(keys):
-                if (k and c in k):
-                    # map each character to its digit equivalent
-                    combination += str(i)
-
-        return combination
-
-    # the list of keywords and matching passphrases
-    keywords = { "BADGER": "RIVER",\
-                 "BANDIT": "FADED",\
-                 "CABLES": "SPINY",\
-                 "CANOPY": "THROW",\
-                 "FIELDS": "CYCLE",\
-                 "FIERCE": "ALOOF",\
-                 "IMMUNE": "STOLE",\
-                 "IMPACT": "TOADY",\
-                 "MIDWAY": "FEIGN",\
-                 "MIGHTY": "CARVE",\
-                 "REBORN": "TRICK",\
-                 "RECALL": "CLIMB",\
-                 "SYMBOL": "LEAVE",\
-                 "SYSTEM": "FOXES",\
-                 "WIDELY": "BOUND",\
-                 "WINGED": "YACHT" }
-    # the rotation cipher key
-    rot = randint(1, 25)
-
-    # pick a keyword and matching passphrase
-    keyword, passphrase = choice(list(keywords.items()))
-    # encrypt the passphrase and get its combination
-    cipher_keyword = encrypt(keyword, rot)
-    combination = digits(passphrase)
-
-    return keyword, cipher_keyword, rot, combination, passphrase
+# Set the keypad code to the product binary
+keypad_code = int(product_binary, 2)
 
 ###############################
 # generate the bomb's specifics
@@ -188,7 +123,7 @@ def genKeypadCombination():
 #  serial: the bomb's serial number
 #  toggles_target: the toggles phase defuse value
 #  wires_target: the wires phase defuse value
-serial, toggles_target, wires_target = genSerial()
+serial = genSerial()
 
 # generate the combination for the keypad phase
 #  keyword: the plaintext keyword for the lookup table
@@ -196,7 +131,6 @@ serial, toggles_target, wires_target = genSerial()
 #  rot: the key to decrypt the keyword
 #  keypad_target: the keypad phase defuse value (combination)
 #  passphrase: the target plaintext passphrase
-keyword, cipher_keyword, rot, keypad_target, passphrase = genKeypadCombination()
 
 # generate the color of the pushbutton (which determines how to defuse the phase)
 button_color = choice(["R", "G", "B"])
@@ -212,9 +146,9 @@ if button_color == "B":
 
 if (DEBUG):
     print(f"Serial number: {serial}")
-    print(f"Toggles target: {bin(toggles_target)[2:].zfill(4)}/{toggles_target}")
-    print(f"Wires target: {bin(wires_target)[2:].zfill(5)}/{wires_target}")
-    print(f"Keypad target: {keypad_target}/{passphrase}/{keyword}/{cipher_keyword}(rot={rot})")
+    #print(f"Toggles target: {bin(toggles_target)[2:].zfill(4)}/{toggles_target}")
+    #print(f"Wires target: {bin(wires_target)[2:].zfill(5)}/{wires_target}")
+    #print(f"Keypad target: {keypad_target}/{passphrase}/{keyword}/{cipher_keyword}(rot={rot})")
     print(f"Button target: {button_target}")
 
 # set the bomb's LCD bootup text
@@ -224,8 +158,7 @@ boot_text = f"Booting...\n\x00\x00"\
             f"*System model: 102BOMBv4.2\n"\
             f"*Serial number: {serial}\n"\
             f"Encrypting keypad...\n\x00"\
-            f"*Keyword: {cipher_keyword}; key: {rot}\n"\
-            f"*{' '.join(ascii_uppercase)}\n"\
-            f"*{' '.join([str(n % 10) for n in range(26)])}\n"\
-            f"Rendering phases...\x00"
-
+            #f"*Keyword: {cipher_keyword}; key: {rot}\n"\
+            #f"*{' '.join(ascii_uppercase)}\n"\
+            #f"*{' '.join([str(n % 10) for n in range(26)])}\n"\
+            #f"Rendering phases...\x00"
