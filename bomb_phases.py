@@ -23,7 +23,7 @@ class Lcd(Frame):
     def __init__(self, window):
         super().__init__(window, bg="black")
         # make the GUI fullscreen
-        window.attributes("-fullscreen", True)
+        #window.attributes("-fullscreen", True)
         # we need to know about the timer (7-segment display) to be able to pause/unpause it
         self._timer = None
         # we need to know about the pushbutton to turn off its LED when the program exits
@@ -284,15 +284,19 @@ class Keypad(PhaseThread):
                     except:
                         key = ""
                     sleep(0.1)
-                # log the key
-                self._value += str(key)
-                # the combination is correct -> phase defused
-                if (self._value == self._target):
-                    self._defused = True
-                # the combination is incorrect -> phase failed (strike)
-                elif (self._value != self._target[0:len(self._value)]):
-                    self._failed = True
-            sleep(0.1)
+                if key == "#":
+                    pygame.mixer.music.load("ding.mp3")
+                    pygame.mixer.music.play(loops=(toggles_target-1))
+                else:
+                    # log the key
+                    self._value += str(key)
+                    # the combination is correct -> phase defused
+                    if (self._value == self._target):
+                        self._defused = True
+                    # the combination is incorrect -> phase failed (strike)
+                    elif (self._value != self._target[0:len(self._value)]):
+                        self._failed = True
+                sleep(0.1)
 
     # returns the keypad combination as a string
     def __str__(self):
@@ -368,8 +372,38 @@ class Button(PhaseThread):
             return f"{self._click_count} clicks"
 
 
-    # the toggle switches phase
+# the toggle switches phase
 class Toggles(NumericPhase):
     def __init__(self, component, target, display_length, name="Toggles"):
         super().__init__(name, component, target, display_length)
+
+    # Add the new defusal logic here
+    def defuse_wires(self):
+        current_time = datetime.now().strftime("%H:%M:%S")
+        # Calculate the sum of digits in the current time
+        sum_of_digits = sum(int(digit) for digit in current_time if digit.isdigit())
+        
+        # Update the wire_target based on the sum of digits
+        wire_target = sum_of_digits
+        self._target = wire_target
+        
+        # Diffuse wires based on the binary representation of wire_target
+        binary_representation = bin(wire_target)[2:]  # Convert to binary and remove the '0b' prefix
+        self.diffuse_wires(binary_representation)
+
+    def diffuse_wires(self, binary_representation):
+        # Your logic to diffuse wires based on binary_representation
+        # For example, if binary_representation is '101', diffuse wires A and C
+        # For demonstration purposes, print the wires to be diffused
+        print(f"Diffusing wires: {binary_representation}")
+
+    # Override the defuse method to trigger the defusal of wires
+    def defuse(self):
+        super().defuse()
+        self.defuse_wires()
+
+    # Override the _check_state method to customize the state check
+    def _check_state(self):
+        # Your custom state check logic, if needed
+        return super()._check_state()
 
