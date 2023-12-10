@@ -372,38 +372,7 @@ class Button(PhaseThread):
             return f"{self._click_count} clicks"
 
 
-# the toggle switches phase
+    # the toggle switches phase
 class Toggles(NumericPhase):
     def __init__(self, component, target, display_length, name="Toggles"):
         super().__init__(name, component, target, display_length)
-
-    # Add the new defusal logic here
-    def defuse_wires(self):
-        current_time = datetime.now().strftime("%H:%M:%S")
-        # Calculate the sum of digits in the current time
-        sum_of_digits = sum(int(digit) for digit in current_time if digit.isdigit())
-        
-        # Update the wire_target based on the sum of digits
-        wire_target = sum_of_digits
-        self._target = wire_target
-        
-        # Diffuse wires based on the binary representation of wire_target
-        binary_representation = bin(wire_target)[2:]  # Convert to binary and remove the '0b' prefix
-        self.diffuse_wires(binary_representation)
-
-    def diffuse_wires(self, binary_representation):
-        # Your logic to diffuse wires based on binary_representation
-        # For example, if binary_representation is '101', diffuse wires A and C
-        # For demonstration purposes, print the wires to be diffused
-        print(f"Diffusing wires: {binary_representation}")
-
-    # Override the defuse method to trigger the defusal of wires
-    def defuse(self):
-        super().defuse()
-        self.defuse_wires()
-
-    # Override the _check_state method to customize the state check
-    def _check_state(self):
-        # Your custom state check logic, if needed
-        return super()._check_state()
-
