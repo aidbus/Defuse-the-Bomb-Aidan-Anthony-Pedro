@@ -223,7 +223,7 @@ def turn_off():
 ######
 
 # initialize pygame
-#pygame.init()
+pygame.init()
 
 # initialize the LCD GUI
 window = Tk()
