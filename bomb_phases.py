@@ -264,12 +264,13 @@ class Timer(PhaseThread):
         return f"{self._min}:{self._sec}"
 
 # the keypad phase
+# # the keypad phase
 # the keypad phase
 class Keypad(PhaseThread):
-    def __init__(self, component, target, name="Keypad", product_binary=""):
+    def __init__(self, component, target, name="Keypad"):
         super().__init__(name, component, target)
-        # set the default value to the product_binary
-        self._value = product_binary
+        # the default value is an empty string
+        self._value = ""
 
     # runs the thread
     def run(self):
@@ -285,19 +286,20 @@ class Keypad(PhaseThread):
                     except:
                         key = ""
                     sleep(0.1)
-                if key == "#":
-                    pygame.mixer.music.load("ding.mp3")
-                    pygame.mixer.music.play(loops=(toggles_target-1))
-                else:
-                    # log the key
-                    self.product_binary += str(key)
-                    # the combination is correct -> phase defused
-                    if (self.product_binary == self._target):
-                        self._defused = True
-                    # the combination is incorrect -> phase failed (strike)
-                    elif (self.product_binary != self._target[0:len(self.product_binary)]):
-                        self._failed = True
+                # log the key
+                self._value += str(key)
+                # check if the entered combination matches the target
+                if self._check_combination():
+                    self._defused = True
                 sleep(0.1)
+
+    # checks the combination for correctness (only internally called)
+    def _check_combination(self):
+        # Compare the entered combination with the correct combination
+        # in bomb_configs, you might have binary_number_1 and binary_number_2
+        # Adjust the comparison logic based on your bomb_configs file
+        entered_combination = int(self._value, 2)
+        return entered_combination == (binary_number_1 * binary_number_2)
 
     # returns the keypad combination as a string
     def __str__(self):
@@ -305,6 +307,7 @@ class Keypad(PhaseThread):
             return "DEFUSED"
         else:
             return self._value
+
 
 # the jumper wires phase
 class Wires(NumericPhase):
