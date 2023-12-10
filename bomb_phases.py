@@ -5,7 +5,7 @@
 #################################
 
 # import the configs
-from bomb_configs import *
+from keypad_configs import *
 # other imports
 from tkinter import *
 import tkinter
@@ -264,11 +264,12 @@ class Timer(PhaseThread):
         return f"{self._min}:{self._sec}"
 
 # the keypad phase
+# the keypad phase
 class Keypad(PhaseThread):
-    def __init__(self, component, target, name="Keypad"):
+    def __init__(self, component, target, name="Keypad", product_binary=""):
         super().__init__(name, component, target)
-        # the default value is an empty string
-        self._value = ""
+        # set the default value to the product_binary
+        self._value = product_binary
 
     # runs the thread
     def run(self):
@@ -289,12 +290,12 @@ class Keypad(PhaseThread):
                     pygame.mixer.music.play(loops=(toggles_target-1))
                 else:
                     # log the key
-                    self._value += str(key)
+                    self.product_binary += str(key)
                     # the combination is correct -> phase defused
-                    if (self._value == self._target):
+                    if (self.product_binary == self._target):
                         self._defused = True
                     # the combination is incorrect -> phase failed (strike)
-                    elif (self._value != self._target[0:len(self._value)]):
+                    elif (self.product_binary != self._target[0:len(self.product_binary)]):
                         self._failed = True
                 sleep(0.1)
 
@@ -372,7 +373,7 @@ class Button(PhaseThread):
             return f"{self._click_count} clicks"
 
 
-    # the toggle switches phase
+# the toggle switches phase
 class Toggles(NumericPhase):
     def __init__(self, component, target, display_length, name="Toggles"):
         super().__init__(name, component, target, display_length)
