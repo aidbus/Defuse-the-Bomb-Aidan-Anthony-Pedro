@@ -99,44 +99,51 @@ if (RPi):
 #  the sum of the digits should be in the range 1..15 to set the toggles target
 #  the first three letters should be distinct and in the range 0..4 such that A=0, B=1, etc, to match the jumper wires
 #  the last letter should be outside of the range
-# Global variable to store the product of binary numbers for the keypad code
-# Global variable to store the product of binary numbers for the keypad code
-keypad_code = None
-
 def genSerial():
-    global keypad_code  # Declare the global variable
+    # set the digits (used in the toggle switches phase)
+    serial_digits = []
+    toggle_value = randint(1, 15)
+    # the sum of the digits is the toggle value
+    while (len(serial_digits) < 3 or toggle_value - sum(serial_digits) > 0):
+        d = randint(0, min(9, toggle_value - sum(serial_digits)))
+        serial_digits.append(d)
 
-    # Generate two random numbers between 25 and 75
-    num1 = randint(25, 75)
-    num2 = randint(25, 75)
+    # set the letters (used in the jumper wires phase)
+    jumper_indexes = [ 0 ] * 5
+    while (sum(jumper_indexes) < 3):
+        jumper_indexes[randint(0, len(jumper_indexes) - 1)] = 1
+    jumper_value = int("".join([ str(n) for n in jumper_indexes ]), 2)
+    # the letters indicate which jumper wires must be "cut"
+    jumper_letters = [ chr(i + 65) for i, n in enumerate(jumper_indexes) if n == 1 ]
 
-    # Display the two numbers in binary
-    binary_num1 = bin(num1)[2:].zfill(7)  # Using 7 bits for binary representation
-    binary_num2 = bin(num2)[2:].zfill(7)
+    # form the serial number
+    serial = [ str(d) for d in serial_digits ] + jumper_letters
+    # and shuffle it
+    shuffle(serial)
+    # finally, add a final letter (F..Z)
+    serial += [ choice([ chr(n) for n in range(70, 91) ]) ]
+    # and make the serial number a string
+    serial = "".join(serial)
 
-    # Calculate the product of the binary numbers
-    keypad_code = bin(num1 * num2)[2:].zfill(14)  # Using 14 bits for binary representation
+    return serial, toggle_value, jumper_value
 
-    # Return the binary representations of the two numbers
-    return binary_num1, binary_num2
-
-# Example usage:
-# binary_num1, binary_num2 = genSerial()
-# print("Binary Number 1:", binary_num1)
-# print("Binary Number 2:", binary_num2)
-# print("Keypad Code:", keypad_code)
-
-
-
-# generates the keypad combination from a keyword and rotation key
 # generates the keypad combination from a keyword and rotation key
 def genKeypadCombination():
-    global keypad_code  # Access the global variable
+    # Generate two random numbers in the range 50 to 85
+    number1 = randint(50, 85)
+    number2 = randint(50, 85)
 
-    code = keypad_code
+    # Convert the numbers to binary and format to have 4 bits
+    binary1 = bin(number1 - 50)[2:].zfill(4)
+    binary2 = bin(number2 - 50)[2:].zfill(4)
 
-    return code
+    # Calculate the product of the two binary numbers
+    product = bin(number1 * number2)[2:].zfill(4)
 
+    # Keep the combination variable for compatibility (if needed)
+    combination = product
+
+    return binary1, binary2, combination
 
 
 ###############################
@@ -146,14 +153,16 @@ def genKeypadCombination():
 #  serial: the bomb's serial number
 #  toggles_target: the toggles phase defuse value
 #  wires_target: the wires phase defuse value
-binary_num1, binary_num2 = genSerial()
+serial, toggles_target, wires_target = genSerial()
+
 # generate the combination for the keypad phase
 #  keyword: the plaintext keyword for the lookup table
 #  cipher_keyword: the encrypted keyword for the lookup table
 #  rot: the key to decrypt the keyword
 #  keypad_target: the keypad phase defuse value (combination)
 #  passphrase: the target plaintext passphrase
-code = genKeypadCombination()
+binary1, binary2, keypad_target = genKeypadCombination()
+
 # generate the color of the pushbutton (which determines how to defuse the phase)
 button_color = choice(["R", "G", "B"])
 # appropriately set the target (R is None)
@@ -167,24 +176,22 @@ if button_color == "B":
     button_target = 3
 
 if (DEBUG):
-    #print(f"Serial number: {serial}")
-    #print(f"Toggles target: {bin(toggles_target)[2:].zfill(4)}/{toggles_target}")
-    #print(f"Wires target: {bin(wires_target)[2:].zfill(5)}/{wires_target}")
-    #print(f"Keypad target: {keypad_target}/{passphrase}/{keyword}/{cipher_keyword}(rot={rot})")
-    print(f"Binary Number 1: {binary_num1}")
-    print(f"Binary Number 2: {binary_num2}")
-    print(f"Keypad Code: {keypad_code}")
+    print(f"Serial number: {serial}")
+    print(f"Toggles target: {bin(toggles_target)[2:].zfill(4)}/{toggles_target}")
+    print(f"Wires target: {bin(wires_target)[2:].zfill(5)}/{wires_target}")
+    print(f"Keypad target: {keypad_target}")
     print(f"Button target: {button_target}")
 
 # set the bomb's LCD bootup text
-boot_text = f"Booting...\n\x00\x00"\
-            f"*Kernel v3.1.4-159 loaded.\n"\
-            f"Initializing subsystems...\n\x00"\
-            f"*System model: 102BOMBv4.2\n"\
-            f"Encrypting keypad...\n\x00"\
-            f"*{' '.join(ascii_uppercase)}\n"\
-            f"*{' '.join([str(n % 10) for n in range(26)])}\n"\
-            f"Rendering phases...\x00"
-
-#f"*Serial number: {serial}\n"\
-#f"*Keyword: {cipher_keyword}; key: {rot}\n"\
+boot_text = (
+    f"Booting...\n\x00\x00"
+    f"*Kernel v3.1.4-159 loaded.\n"
+    f"Initializing subsystems...\n\x00"
+    f"*System model: 102BOMBv4.2\n"
+    f"*Serial number: {serial}\n"
+    f"Encrypting keypad...\n\x00"
+    f"*Keyword: {binary1} {binary2}"
+    f"*{' '.join(ascii_uppercase)}\n"
+    f"*{' '.join([str(n % 10) for n in range(26)])}\n"
+    f"Rendering phases...\x00"
+)
