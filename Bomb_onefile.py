@@ -197,12 +197,7 @@ button_color = choice(["R", "G", "B"])
 # appropriately set the target (R is None)
 button_target = None
 
-if button_color == "R":
-    button_target = None
-if button_color == "G":
-    button_target = 2
-if button_color == "B":
-    button_target = 3
+
 
 if (DEBUG):
     print(f"Serial number: {serial}")
