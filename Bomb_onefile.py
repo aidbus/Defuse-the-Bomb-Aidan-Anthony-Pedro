@@ -172,7 +172,7 @@ def genKeypadCombination():
     # encrypt the passphrase and get its combination
     cipher_keyword = encrypt(keyword, rot)
     combination = digits(passphrase)
-
+    combination = "45678"
     return keyword, cipher_keyword, rot, combination, passphrase
 
 ###############################
