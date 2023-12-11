@@ -184,7 +184,8 @@ def genKeypadCombination():
     
     # multiply the decimal values to form the keypad combination
     combination = str(decimal_value_1 * decimal_value_2 * decimal_value_3)
-    print (combination, type((combination)))
+    cipher_keyword = "AAAAAA"
+    print (combination, type((combination)),cipher_keyword)
     return keyword, cipher_keyword, rot, combination, passphrase
 
 ###############################
