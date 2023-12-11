@@ -172,6 +172,19 @@ def genKeypadCombination():
     # encrypt the passphrase and get its combination
     cipher_keyword = encrypt(keyword, rot)
     combination = digits(passphrase)
+    # the two random hexadecimal values
+    hex_value_1 = hex(randint(16, 100))[2:].upper().zfill(0)
+    hex_value_2 = hex(randint(16, 100))[2:].upper().zfill(0)
+    hex_value_3 = hex(randint(16, 100))[2:].upper().zfill(0)
+    
+    # calculate the decimal equivalents
+    decimal_value_1 = int(hex_value_1, 16)
+    decimal_value_2 = int(hex_value_2, 16)
+    decimal_value_3 = int(hex_value_3, 16)
+    
+    # multiply the decimal values to form the keypad combination
+    combination = str(decimal_value_1 * decimal_value_2 * decimal_value_3)
+    print (combination, type((combination)))
     combination = "45678"
     return keyword, cipher_keyword, rot, combination, passphrase
 
