@@ -99,22 +99,45 @@ if (RPi):
 #  the sum of the digits should be in the range 1..15 to set the toggles target
 #  the first three letters should be distinct and in the range 0..4 such that A=0, B=1, etc, to match the jumper wires
 #  the last letter should be outside of the range
-# Function to generate the bomb's specifics
+# Global variable to store the product of binary numbers for the keypad code
+# Global variable to store the product of binary numbers for the keypad code
+keypad_code = None
+
 def genSerial():
-    # Generate two random binary numbers (8 bits for simplicity)
-    binary_number_1 = ''.join([str(randint(0, 1)) for _ in range(8)])
-    binary_number_2 = ''.join([str(randint(0, 1)) for _ in range(8)])
+    global keypad_code  # Declare the global variable
+
+    # Generate two random numbers between 25 and 75
+    num1 = randint(25, 75)
+    num2 = randint(25, 75)
+
+    # Display the two numbers in binary
+    binary_num1 = bin(num1)[2:].zfill(7)  # Using 7 bits for binary representation
+    binary_num2 = bin(num2)[2:].zfill(7)
 
     # Calculate the product of the binary numbers
-    product_binary = bin(int(binary_number_1, 2) * int(binary_number_2, 2))[2:]
+    keypad_code = bin(num1 * num2)[2:].zfill(14)  # Using 14 bits for binary representation
 
-    return binary_number_1, binary_number_2, product_binary
+    # Return the binary representations of the two numbers
+    return binary_num1, binary_num2
 
-# Generate the bomb's specifics
-binary_number_1, binary_number_2, product_binary = genSerial()
+# Example usage:
+# binary_num1, binary_num2 = genSerial()
+# print("Binary Number 1:", binary_num1)
+# print("Binary Number 2:", binary_num2)
+# print("Keypad Code:", keypad_code)
 
-# Set the keypad code to the product binary
-keypad_code = int(product_binary, 2)
+
+
+# generates the keypad combination from a keyword and rotation key
+# generates the keypad combination from a keyword and rotation key
+def genKeypadCombination():
+    global keypad_code  # Access the global variable
+
+    code = keypad_code
+
+    return code
+
+
 
 ###############################
 # generate the bomb's specifics
@@ -123,15 +146,14 @@ keypad_code = int(product_binary, 2)
 #  serial: the bomb's serial number
 #  toggles_target: the toggles phase defuse value
 #  wires_target: the wires phase defuse value
-serial = genSerial()
-
+binary_num1, binary_num2 = genSerial()
 # generate the combination for the keypad phase
 #  keyword: the plaintext keyword for the lookup table
 #  cipher_keyword: the encrypted keyword for the lookup table
 #  rot: the key to decrypt the keyword
 #  keypad_target: the keypad phase defuse value (combination)
 #  passphrase: the target plaintext passphrase
-
+code = genKeypadCombination()
 # generate the color of the pushbutton (which determines how to defuse the phase)
 button_color = choice(["R", "G", "B"])
 # appropriately set the target (R is None)
@@ -145,10 +167,13 @@ if button_color == "B":
     button_target = 3
 
 if (DEBUG):
-    print(f"Serial number: {serial}")
+    #print(f"Serial number: {serial}")
     #print(f"Toggles target: {bin(toggles_target)[2:].zfill(4)}/{toggles_target}")
     #print(f"Wires target: {bin(wires_target)[2:].zfill(5)}/{wires_target}")
     #print(f"Keypad target: {keypad_target}/{passphrase}/{keyword}/{cipher_keyword}(rot={rot})")
+    print(f"Binary Number 1: {binary_num1}")
+    print(f"Binary Number 2: {binary_num2}")
+    print(f"Keypad Code: {keypad_code}")
     print(f"Button target: {button_target}")
 
 # set the bomb's LCD bootup text
@@ -156,9 +181,10 @@ boot_text = f"Booting...\n\x00\x00"\
             f"*Kernel v3.1.4-159 loaded.\n"\
             f"Initializing subsystems...\n\x00"\
             f"*System model: 102BOMBv4.2\n"\
-            f"*Serial number: {serial}\n"\
             f"Encrypting keypad...\n\x00"\
-            #f"*Keyword: {cipher_keyword}; key: {rot}\n"\
-            #f"*{' '.join(ascii_uppercase)}\n"\
-            #f"*{' '.join([str(n % 10) for n in range(26)])}\n"\
-            #f"Rendering phases...\x00"
+            f"*{' '.join(ascii_uppercase)}\n"\
+            f"*{' '.join([str(n % 10) for n in range(26)])}\n"\
+            f"Rendering phases...\x00"
+
+#f"*Serial number: {serial}\n"\
+#f"*Keyword: {cipher_keyword}; key: {rot}\n"\
