@@ -1,29 +1,12 @@
-# constants
-DEBUG = True        # debug mode?
-RPi = False           # is this running on the RPi?
-ANIMATE = False       # animate the LCD text?
-SHOW_BUTTONS = True # show the Pause and Quit buttons on the main LCD GUI?
-COUNTDOWN = 180      # the initial bomb countdown value (seconds)
-NUM_STRIKES = 5      # the total strikes allowed before the bomb "explodes"
-NUM_PHASES = 4       # the total number of initial active bomb phases
-# the various image and audio files
-EXPLODE = [ "./images/explode.png", "./audio/explode.mp3" ]
-SUCCESS = [ "./images/success.png", "./audio/success.mp3" ]
-EXPLODING = "./audio/exploding.mp3"
-STRIKE = "./audio/strike.mp3"
-DEFUSED = "./audio/defused.mp3"
-TICK = "./audio/tick.mp3"
+#################################
+# CSC 102 Defuse the Bomb Project
+# GUI and Phase class definitions
+# Team: Gourd
+#################################
 
-# imports
-from random import randint, shuffle, choice
-from string import ascii_uppercase
-if (RPi):
-    import board
-    from adafruit_ht16k33.segments import Seg7x4
-    from digitalio import DigitalInOut, Direction, Pull
-    from adafruit_matrixkeypad import Matrix_Keypad
-
-################################
+# import the configs
+from bomb_configs import *
+# other imports
 from tkinter import *
 import tkinter
 from threading import Thread
@@ -31,6 +14,8 @@ import pygame
 from time import sleep
 import os
 import sys
+pygame.init()
+################################
 
 #########
 # classes
@@ -195,7 +180,7 @@ class NumericPhase(PhaseThread):
             self._value = self._get_int_state()
             # the component value is correct -> phase defused
             if (self._value == self._target):
-                    self._defused = True
+                self._defused = True
             # the component state has changed
             elif (self._value != self._prev_value):
                 # one or more component states are incorrect -> phase failed (strike)
@@ -322,40 +307,35 @@ class Keypad(PhaseThread):
         else:
             return self._value
 
-    
 # the jumper wires phase
 class Wires(NumericPhase):
     def __init__(self, component, target, display_length, name="Wires"):
         super().__init__(name, component, target, display_length)
         self._defused = False
-        self._target = target
+        self._target = wires_target
+
     
     def run(self):
         self._running = True
-        while self._running:
-            # Update the value based on the current state of the component
+        while (self._running):
             self._value = self._get_int_state()
-
-            # Access the global wires_target for the latest value
-            global wires_target
-            if self._value == wires_target:
+            if (self._value == self._target):
                 self._defused = True
-                break  # Exit the loop after defusal
+            elif (self._value == wires_target):  # Additional check for wires_target
+                self._defused = True
+            elif (self._value != self._prev_value):
+                if (not self._check_state()):
+                    self._failed = True
+                self._prev_value = self._value
+            sleep(0.1)
 
-    
-    
     def __str__(self):
-        if (self._defused):
+        if self._defused:
             return "DEFUSED"
         else:
             return "".join([ chr(int(i)+65) if pin.value else "." for i, pin in enumerate(self._component) ])
-        #jumper_indexes = [0] * 5
-       # while sum(jumper_indexes) < 3:
-           # jumper_indexes[randint(0, len(jumper_indexes) - 1)] = 1
-      #  jumper_letters = [ chr(i + 65) for i, n in enumerate(jumper_indexes) if n == 1 ]
-        
-        #jumper_letters = self._value
-# the pushbutton phase
+
+
 # the pushbutton phase
 class Button(PhaseThread):
     def __init__(self, component_state, component_rgb, target, color, name="Button"):
@@ -417,40 +397,49 @@ class Toggles(NumericPhase):
     def __init__(self, component, target, display_length, timer, name="Toggles"):
         super().__init__(name, component, target, display_length)
         self._timer = timer
-    
-    def update_wires_target(self):
-    global wires_target
-    timevalue = self._timer._value
-    digits = list(str(timevalue))
-    sumdigits = sum(int(digit) for digit in digits)
-    wires_target = sumdigits
-
-
-    def run(self):
-        self._running = True
-        while self._running:
-            # Update the value based on the current state of the component
-            self._value = self._get_int_state()
-
-            # Check if the toggles are set to the target configuration
-            if self._value == self._target:
-                self._defused = True
-                self.update_wires_target()  # Update wires_target on defusal
-                break  # Exit the loop after defusal
-    
+        
     def __str__(self):
         if self._defused:
             timevalue = self._timer._value
             digits = list(str(timevalue))
             sumdigits = sum(int(digit) for digit in digits)  # Store the sum of digits
             formattedtime = ", ".join(digits)
-            #update_wires_target(sumdigits)
+            update_wires_target(sumdigits)
             print(wires_target)
             return "DEFUSED\n{}: ({})".format(str(timevalue), formattedtime)
         else:
             return f"{bin(self._value)[2:].zfill(self._display_length)}/{self._value}"
 
-###########
+#################################
+# CSC 102 Defuse the Bomb Project
+# Configuration file
+# Team: Gourd
+#################################
+
+# constants
+DEBUG = True        # debug mode?
+RPi = False           # is this running on the RPi?
+ANIMATE = False       # animate the LCD text?
+SHOW_BUTTONS = True # show the Pause and Quit buttons on the main LCD GUI?
+COUNTDOWN = 60      # the initial bomb countdown value (seconds)
+NUM_STRIKES = 5      # the total strikes allowed before the bomb "explodes"
+NUM_PHASES = 4       # the total number of initial active bomb phases
+# the various image and audio files
+EXPLODE = [ "./images/explode.png", "./audio/explode.mp3" ]
+SUCCESS = [ "./images/success.png", "./audio/success.mp3" ]
+EXPLODING = "./audio/exploding.mp3"
+STRIKE = "./audio/strike.mp3"
+DEFUSED = "./audio/defused.mp3"
+TICK = "./audio/tick.mp3"
+
+# imports
+from random import randint, shuffle, choice
+from string import ascii_uppercase
+if (RPi):
+    import board
+    from adafruit_ht16k33.segments import Seg7x4
+    from digitalio import DigitalInOut, Direction, Pull
+    from adafruit_matrixkeypad import Matrix_Keypad
 
 #################################
 # setup the electronic components
@@ -553,6 +542,10 @@ def genSerial():
 
     return serial, toggle_value, wires_target
 
+def update_wires_target(value):
+    global wires_target
+    wires_target = value
+    
 # generates the keypad combination from a keyword and rotation key
 def genKeypadCombination():
     # encrypts a keyword using a rotation cipher
@@ -663,7 +656,17 @@ boot_text = f"Booting...\n\x00\x00"\
             f"*{' '.join([str(n % 10) for n in range(26)])}\n"\
             f"Rendering phases...\x00"
 
-###########
+#################################
+# CSC 102 Defuse the Bomb Project
+# Main program
+# Team: Gourd
+#################################
+
+# import the configs
+#from bomb_configs import *
+# import the phases
+#from bomb_phases import *
+
 # functions
 ###########
 # generates the bootup sequence on the LCD
