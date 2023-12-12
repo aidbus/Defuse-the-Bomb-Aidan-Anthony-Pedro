@@ -1,6 +1,6 @@
 # constants
 DEBUG = True        # debug mode?
-RPi = True           # is this running on the RPi?
+RPi = False           # is this running on the RPi?
 ANIMATE = False       # animate the LCD text?
 SHOW_BUTTONS = True # show the Pause and Quit buttons on the main LCD GUI?
 COUNTDOWN = 180      # the initial bomb countdown value (seconds)
@@ -329,7 +329,21 @@ class Wires(NumericPhase):
         super().__init__(name, component, target, display_length)
         self._defused = False
         self._target = target
-        
+    
+    def run(self):
+        self._running = True
+        while self._running:
+            # Update the value based on the current state of the component
+            self._value = self._get_int_state()
+
+            # Access the global wires_target for the latest value
+            global wires_target
+            if self._value == wires_target:
+                self._defused = True
+                break  # Exit the loop after defusal
+
+    
+    
     def __str__(self):
         if (self._defused):
             return "DEFUSED"
@@ -403,14 +417,34 @@ class Toggles(NumericPhase):
     def __init__(self, component, target, display_length, timer, name="Toggles"):
         super().__init__(name, component, target, display_length)
         self._timer = timer
-        
+    
+    def update_wires_target(self):
+    global wires_target
+    timevalue = self._timer._value
+    digits = list(str(timevalue))
+    sumdigits = sum(int(digit) for digit in digits)
+    wires_target = sumdigits
+
+
+    def run(self):
+        self._running = True
+        while self._running:
+            # Update the value based on the current state of the component
+            self._value = self._get_int_state()
+
+            # Check if the toggles are set to the target configuration
+            if self._value == self._target:
+                self._defused = True
+                self.update_wires_target()  # Update wires_target on defusal
+                break  # Exit the loop after defusal
+    
     def __str__(self):
         if self._defused:
             timevalue = self._timer._value
             digits = list(str(timevalue))
             sumdigits = sum(int(digit) for digit in digits)  # Store the sum of digits
             formattedtime = ", ".join(digits)
-            update_wires_target(sumdigits)
+            #update_wires_target(sumdigits)
             print(wires_target)
             return "DEFUSED\n{}: ({})".format(str(timevalue), formattedtime)
         else:
@@ -519,10 +553,6 @@ def genSerial():
 
     return serial, toggle_value, wires_target
 
-def update_wires_target(value):
-    global wires_target
-    wires_target = value
-    
 # generates the keypad combination from a keyword and rotation key
 def genKeypadCombination():
     # encrypts a keyword using a rotation cipher
