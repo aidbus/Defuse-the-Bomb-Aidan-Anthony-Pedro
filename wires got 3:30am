@@ -1,0 +1,27 @@
+from random import randint
+
+class Wires(NumericPhase):
+    def __init__(self, component, target, display_length, name="Wires"):
+        super().__init__(name, component, target, display_length)
+        self._defused = False
+        self._target = target  # Store the target value
+        self.jumper_letters = [chr(i + 65) for i, n in enumerate(self._get_jumper_indexes()) if n == 1]
+
+    def _get_jumper_indexes(self):
+        jumper_indexes = [0] * 5
+        while sum(jumper_indexes) < 3:
+            jumper_indexes[randint(0, len(jumper_indexes) - 1)] = 1
+        return jumper_indexes
+
+    def run(self):
+        self._running = True
+        while self._running:
+            # Calculate the value of the connected wires
+            connected_wires_value = sum(2 ** i for i, pin in enumerate(self._component) if pin.value)
+            
+            # Check if the value of connected wires matches the target
+            if connected_wires_value == self._target:
+                self._defused = True
+            else:
+                self._defused = False
+            sleep(0.1)
