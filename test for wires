@@ -1,4 +1,4 @@
-#constants
+# constants
 DEBUG = True        # debug mode?
 RPi = False           # is this running on the RPi?
 ANIMATE = False       # animate the LCD text?
@@ -322,20 +322,21 @@ class Keypad(PhaseThread):
         else:
             return self._value
 
-wires_target = 100
-
+# the jumper wires phase
 class Wires(NumericPhase):
-    def __init__(self, component, display_length, name="Wires"):
-        global wires_target
-        super().__init__(name, component, wires_target, display_length)
-        # Other initializations for the Wires class...
+    def __init__(self, component, target, display_length, name="Wires"):
+        super().__init__(name, component, target, display_length)
+        self._defused = False
+        self._target = wires_target
+        # returns the jumper wires state as a string
 
     def __str__(self):
-        if self._defused:
+        if (self._defused):
             return "DEFUSED"
         else:
             return "".join([ chr(int(i)+65) if pin.value else "." for i, pin in enumerate(self._component) ])
 
+# the pushbutton phase
 # the pushbutton phase
 class Button(PhaseThread):
     def __init__(self, component_state, component_rgb, target, color, name="Button"):
@@ -392,31 +393,23 @@ class Button(PhaseThread):
 
 # the toggle switches phase
 class Toggles(NumericPhase):
+    sumdigits = None  # Class variable to store the sum of digits
+
     def __init__(self, component, target, display_length, timer, name="Toggles"):
         super().__init__(name, component, target, display_length)
         self._timer = timer
-
-    def update_wires_target(self):
-        # This method should be called when the Toggles phase is defused
-        global wires_target
-        timevalue = self._timer._value
-        digits = list(str(timevalue))
-        sumdigits = sum(int(digit) for digit in digits)
-        wires_target = sumdigits
-
-    def check_defusal(self):
-        # Call this method to check if the phase is defused
-        if self._defused:
-            self.update_wires_target()
-
+        
     def __str__(self):
         if self._defused:
             timevalue = self._timer._value
-            formattedtime = ", ".join(list(str(timevalue)))
+            digits = list(str(timevalue))
+            sumdigits = sum(int(digit) for digit in digits)  # Store the sum of digits
+            formattedtime = ", ".join(digits)
+            update_wires_target(sumdigits)
+            print(wires_target)
             return "DEFUSED\n{}: ({})".format(str(timevalue), formattedtime)
         else:
             return f"{bin(self._value)[2:].zfill(self._display_length)}/{self._value}"
-
 
 ###########
 
@@ -490,8 +483,6 @@ if (RPi):
 #  the sum of the digits should be in the range 1..15 to set the toggles target
 #  the first three letters should be distinct and in the range 0..4 such that A=0, B=1, etc, to match the jumper wires
 #  the last letter should be outside of the range
-#wires_target = 100
-
 def genSerial():
     # set the digits (used in the toggle switches phase)
     serial_digits = []
@@ -506,7 +497,7 @@ def genSerial():
     while (sum(jumper_indexes) < 3):
         jumper_indexes[randint(0, len(jumper_indexes) - 1)] = 1
 
-    #wires_target = 100
+    wires_target = 100
         #int("".join([ str(n) for n in jumper_indexes ]), 2)  # Existing logic for wires_target
 
     # the letters indicate which jumper wires must be "cut"
@@ -522,6 +513,10 @@ def genSerial():
     serial = "".join(serial)
 
     return serial, toggle_value, wires_target
+
+def update_wires_target(value):
+    global wires_target
+    wires_target = value
     
 # generates the keypad combination from a keyword and rotation key
 def genKeypadCombination():
@@ -632,5 +627,4 @@ boot_text = f"Booting...\n\x00\x00"\
             f"*{' '.join(ascii_uppercase)}\n"\
             f"*{' '.join([str(n % 10) for n in range(26)])}\n"\
             f"Rendering phases...\x00"
-
 
