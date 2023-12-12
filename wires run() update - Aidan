@@ -1,0 +1,24 @@
+def run(self):
+        self._running = True
+        while (self._running):
+            # get the component value
+            self._value = self._get_int_state()
+            # the component value is correct -> phase defused
+            if (self._value == self._target):
+                self._defused = True
+            # the component state has changed
+            elif (self._value != self._prev_value):
+                # one or more component states are incorrect -> phase failed (strike)
+                if (not self._check_state()):
+                    self._failed = True
+                # note the updated state
+                self._prev_value = self._value
+
+            # Add this part to update defusal status based on the current wires_target
+            disconnected_wires = [pin for i, pin in enumerate(self._component) if (self._target >> i) & 1 == 0]
+            if all(not wire.value for wire in disconnected_wires):
+                self._defused = True
+            else:
+                self._defused = False
+
+            sleep(0.1)
