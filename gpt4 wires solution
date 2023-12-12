@@ -1,0 +1,52 @@
+# the toggle switches phase
+class Toggles(NumericPhase):
+    sumdigits = None  # Class variable to store the sum of digits
+
+    def __init__(self, component, target, display_length, timer, name="Toggles"):
+        super().__init__(name, component, target, display_length)
+        self._timer = timer
+        
+    def __str__(self):
+        if self._defused:
+            timevalue = self._timer._value
+            digits = list(str(timevalue))
+            Toggles.sumdigits = sum(int(digit) for digit in digits)  # Store the sum of digits
+            formattedtime = ", ".join(digits)
+            return "DEFUSED\n{}: ({})".format(str(timevalue), formattedtime)
+        else:
+            return f"{bin(self._value)[2:].zfill(self._display_length)}/{self._value}"
+
+
+def genSerial():
+    # set the digits (used in the toggle switches phase)
+    serial_digits = []
+    toggle_value = randint(1, 15)
+    # the sum of the digits is the toggle value
+    while (len(serial_digits) < 3 or toggle_value - sum(serial_digits) > 0):
+        d = randint(0, min(9, toggle_value - sum(serial_digits)))
+        serial_digits.append(d)
+
+    # set the letters (used in the jumper wires phase)
+    jumper_indexes = [ 0 ] * 5
+    while (sum(jumper_indexes) < 3):
+        jumper_indexes[randint(0, len(jumper_indexes) - 1)] = 1
+
+    # Use sumdigits from Toggles class if available
+    if Toggles.sumdigits is not None:
+        wires_target = Toggles.sumdigits
+    else:
+        wires_target = int("".join([ str(n) for n in jumper_indexes ]), 2)  # Existing logic for wires_target
+
+    # the letters indicate which jumper wires must be "cut"
+    jumper_letters = [ chr(i + 65) for i, n in enumerate(jumper_indexes) if n == 1 ]
+
+    # form the serial number
+    serial = [ str(d) for d in serial_digits ] + jumper_letters
+    # and shuffle it
+    shuffle(serial)
+    # finally, add a final letter (F..Z)
+    serial += [ choice([ chr(n) for n in range(70, 91) ]) ]
+    # and make the serial number a string
+    serial = "".join(serial)
+
+    return serial, toggle_value, wires_target
