@@ -31,7 +31,6 @@ import pygame
 from time import sleep
 import os
 import sys
-
 #########
 # classes
 #########
@@ -195,7 +194,7 @@ class NumericPhase(PhaseThread):
             self._value = self._get_int_state()
             # the component value is correct -> phase defused
             if (self._value == self._target):
-                    self._defused = True
+                self._defused = True
             # the component state has changed
             elif (self._value != self._prev_value):
                 # one or more component states are incorrect -> phase failed (strike)
@@ -322,33 +321,38 @@ class Keypad(PhaseThread):
         else:
             return self._value
 
-    
 # the jumper wires phase
 class Wires(NumericPhase):
     def __init__(self, component, target, display_length, name="Wires"):
         super().__init__(name, component, target, display_length)
         self._defused = False
-        #self._target = target
-        
-    def update_wires_target(value, target):
-        global wires_target
-        self._target = value
+        self._target = wires_target
+        # returns the jumper wires state as a string
     
+    def run(self):
+        self._running = True
+        while (self._running):
+            self._value = self._get_int_state()
+            if (self._value == self._target):
+                self._defused = True
+            elif (self._value == wires_target):  # Additional check for wires_target
+                self._defused = True
+            elif (self._value != self._prev_value):
+                if (not self._check_state()):
+                    self._failed = True
+                self._prev_value = self._value
+            sleep(0.1)
+
     def __str__(self):
         if (self._defused):
             return "DEFUSED"
         else:
             return "".join([ chr(int(i)+65) if pin.value else "." for i, pin in enumerate(self._component) ])
-        #jumper_indexes = [0] * 5
-       # while sum(jumper_indexes) < 3:
-           # jumper_indexes[randint(0, len(jumper_indexes) - 1)] = 1
-      #  jumper_letters = [ chr(i + 65) for i, n in enumerate(jumper_indexes) if n == 1 ]
-        
-        #jumper_letters = self._value
-# the pushbutton phase
+
+
 # the pushbutton phase
 class Button(PhaseThread):
-    def __init__(self, component_state, component_rgb, target, color, name="Button"):
+    def __init__(self, component_state, component_rgb, target, color, keypad_target, name="Button"):
         super().__init__(name, component_state, target)
         # the default value is False/Released
         self._value = False
@@ -364,7 +368,15 @@ class Button(PhaseThread):
             self._clicks_required = 2
         elif color == "B":
             self._clicks_required = 3
-        # count the number of clicks
+        elif color == "R":
+            # Extract the last digit of the keypad target and use it as the required clicks
+            self._clicks_required = int(str(keypad_target)[-1])
+            # Handle the case when the last digit is 0
+            if self._clicks_required == 0:
+                # Set to a default or specific value for the case when last digit is 0
+                self._clicks_required = 10
+        
+        # Count the number of clicks
         self._click_count = 0
 
     # runs the thread
@@ -414,13 +426,11 @@ class Toggles(NumericPhase):
             digits = list(str(timevalue))
             sumdigits = sum(int(digit) for digit in digits)  # Store the sum of digits
             formattedtime = ", ".join(digits)
-            Wires.update_wires_target(sumdigits)
+            update_wires_target(sumdigits)
             print(wires_target)
             return "DEFUSED\n{}: ({})".format(str(timevalue), formattedtime)
         else:
             return f"{bin(self._value)[2:].zfill(self._display_length)}/{self._value}"
-
-###########
 
 #################################
 # setup the electronic components
@@ -523,9 +533,9 @@ def genSerial():
 
     return serial, toggle_value, wires_target
 
-#def update_wires_target(value):
-    #global wires_target
-    #wires_target = value
+def update_wires_target(value):
+    global wires_target
+    wires_target = value
     
 # generates the keypad combination from a keyword and rotation key
 def genKeypadCombination():
@@ -613,8 +623,15 @@ keyword, cipher_keyword, rot, keypad_target, passphrase = genKeypadCombination()
 
 # generate the color of the pushbutton (which determines how to defuse the phase)
 button_color = choice(["R", "G", "B"])
+
 # appropriately set the target (R is None)
-button_target = None
+# If the button is red, use the last digit of the keypad target
+if button_color == "R":
+    button_target = int(str(keypad_target)[-1])
+else:
+    # Existing logic for green and blue buttons
+    # Replace this with the existing logic for these colors
+    button_target = None
 
 
 
@@ -637,7 +654,17 @@ boot_text = f"Booting...\n\x00\x00"\
             f"*{' '.join([str(n % 10) for n in range(26)])}\n"\
             f"Rendering phases...\x00"
 
-###########
+#################################
+# CSC 102 Defuse the Bomb Project
+# Main program
+# Team: Gourd
+#################################
+
+# import the configs
+from bomb_configs import *
+# import the phases
+from bomb_phases import *
+
 # functions
 ###########
 # generates the bootup sequence on the LCD
@@ -772,7 +799,10 @@ def check_phases():
         # the phase is defused -> stop the thread
         if (toggles._defused):
             toggles._running = False
-            
+            timevalue = timer._value
+            digits = list(str(timevalue))
+            sumdigits = sum(int(digit) for digit in digits)  # Store the sum of digit
+            wires._target = sumdigits
             gui._ltoggles["fg"] = "#00ff00"
             defused()
         # the phase has failed -> strike
