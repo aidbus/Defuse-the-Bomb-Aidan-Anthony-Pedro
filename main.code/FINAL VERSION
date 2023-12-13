@@ -3,7 +3,7 @@ DEBUG = True        # debug mode?
 RPi = True           # is this running on the RPi?
 ANIMATE = False       # animate the LCD text?
 SHOW_BUTTONS = True  # show the Pause and Quit buttons on the main LCD GUI?
-COUNTDOWN = 150      # the initial bomb countdown value (seconds)
+COUNTDOWN = 120      # the initial bomb countdown value (seconds)
 NUM_STRIKES = 3      # the total strikes allowed before the bomb "explodes"
 NUM_PHASES = 4       # the total number of initial active bomb phases
 # the various image and audio files
@@ -41,7 +41,7 @@ class Lcd(Frame):
     def __init__(self, window):
         super().__init__(window, bg="black")
         # make the GUI fullscreen
-        #window.attributes("-fullscreen", True)
+        window.attributes("-fullscreen", True)
         # we need to know about the timer (7-segment display) to be able to pause/unpause it
         self._timer = None
         # we need to know about the pushbutton to turn off its LED when the program exits
