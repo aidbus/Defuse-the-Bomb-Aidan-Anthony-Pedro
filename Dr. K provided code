@@ -1,0 +1,15 @@
+    if (toggles._running):
+        # update the GUI
+        gui._ltoggles["text"] = f"Toggles: {toggles}"
+        # the phase is defused -> stop the thread
+        if (toggles._defused):
+            toggles._running = False
+            # Logic to get 31, use the toggles object...
+            wires._target = 31
+            gui._ltoggles["fg"] = "#00ff00"
+            defused()
+        # the phase has failed -> strike
+        elif (toggles._failed):
+            strike()
+            # reset the toggles
+            toggles._failed = False
