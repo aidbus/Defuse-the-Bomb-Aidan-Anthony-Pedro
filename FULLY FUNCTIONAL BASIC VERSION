@@ -1,6 +1,6 @@
 # constants
 DEBUG = True        # debug mode?
-RPi = True           # is this running on the RPi?
+RPi = False           # is this running on the RPi?
 ANIMATE = False       # animate the LCD text?
 SHOW_BUTTONS = True # show the Pause and Quit buttons on the main LCD GUI?
 COUNTDOWN = 180      # the initial bomb countdown value (seconds)
@@ -348,24 +348,28 @@ class Wires(NumericPhase):
 # the pushbutton phase
 # the pushbutton phase
 class Button(PhaseThread):
-    def __init__(self, component_state, component_rgb, target, color, name="Button"):
-        super().__init__(name, component_state, target)
+    def __init__(self, component_state, component_rgb, name="Button"):
+        global button_target  # Referencing the global variable
+
+        super().__init__(name, component_state, button_target)
         # the default value is False/Released
         self._value = False
         # has the pushbutton been pressed?
         self._pressed = False
         # we need the pushbutton's RGB pins to set its color
         self._rgb = component_rgb
-        # the pushbutton's randomly selected LED color
-        self._color = color
-        # define the number of clicks required to defuse based on color
-        self._clicks_required = 1  # Default for Red
-        if color == "G":
-            self._clicks_required = 2
-        elif color == "B":
-            self._clicks_required = 3
-        # count the number of clicks
+        # define the number of clicks required to defuse based on the global button_target
+        self._clicks_required = button_target
+
+        # Handle the case when clicks required turns out to be 0
+        if self._clicks_required == 0:
+            self._clicks_required = 10  # Or some other default logic
+
+        # Count the number of clicks
         self._click_count = 0
+
+        # Debug line
+        print(f"DEBUG: Button clicks required: {button_target}")
 
     # runs the thread
     def run(self):
@@ -608,9 +612,15 @@ keyword, cipher_keyword, rot, keypad_target, passphrase = genKeypadCombination()
 
 # generate the color of the pushbutton (which determines how to defuse the phase)
 button_color = choice(["R", "G", "B"])
-# appropriately set the target (R is None)
 button_target = None
 
+# After keypad_target and button_color have been determined
+if button_color == "R":
+    button_target = int(str(keypad_target)[-1])
+elif button_color == "G":
+    button_target = int(str(keypad_target)[0]) + int(str(keypad_target)[-1])
+elif button_color == "B":
+    button_target = int(str(keypad_target)[0])
 
 
 if (DEBUG):
@@ -866,4 +876,3 @@ gui.after(1000, bootup)
 
 # display the LCD GUI
 window.mainloop()
-
